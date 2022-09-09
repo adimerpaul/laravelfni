@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Mascota;
 use App\Http\Requests\StoreMascotaRequest;
 use App\Http\Requests\UpdateMascotaRequest;
+use DateTime;
+use Illuminate\Support\Facades\App;
+use Luecano\NumeroALetras\NumeroALetras;
 
 class MascotaController extends Controller
 {
@@ -16,6 +19,16 @@ class MascotaController extends Controller
     public function index()
     {
         $mascotas=Mascota::all();
+        foreach ($mascotas as $mascota) {
+            $cumpleanos = new DateTime($mascota->fechaNacimiento);
+            $hoy = new DateTime();
+            $annos = $hoy->diff($cumpleanos);
+            $mascota->edad=$annos->y;
+
+            $formatter = new NumeroALetras();
+            $palabra= $formatter->toWords($mascota->edad);
+            $mascota->palabra=$palabra;
+        }
         $data['mascotas']=$mascotas;
         return view('mascota.index',$data);
     }
@@ -49,9 +62,14 @@ class MascotaController extends Controller
      * @param  \App\Models\Mascota  $mascota
      * @return \Illuminate\Http\Response
      */
-    public function show(Mascota $mascota)
+    public function show($id)
     {
-        //
+//        return $id;
+        $mascota=Mascota::find($id);
+        $pdf = App::make('dompdf.wrapper');
+
+        $pdf->loadHTML('<div> <b>Nombre la mascota:</b> '.$mascota->nombre.'</div>');
+        return $pdf->stream();
     }
 
     /**
